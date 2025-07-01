@@ -16,8 +16,8 @@ def fetch_and_store_news():
     db = SessionLocal()
     try:
         response = newsapi.get_top_headlines(
-            q='bitcoin',              # Change as needed
-            category='business',
+            # q='bitcoin',              # Change as needed
+            # category='business',
             language='en',
             country='us'
         )
@@ -30,13 +30,15 @@ def fetch_and_store_news():
             published_at = article.get("publishedAt")
 
             if title and url:
-                news_item = News(
-                    title=title,
-                    description=description,
-                    url=url,
-                    published_at=datetime.fromisoformat(published_at.replace("Z", "+00:00"))
-                )
-                db.merge(news_item)  # insert or update based on primary key
+                existing = db.query(News).filter_by(url=url).first()
+                if not existing:
+                    news_item = News(
+                        title=title,
+                        description=description,
+                        url=url,
+                        published_at=datetime.fromisoformat(published_at.replace("Z", "+00:00"))
+                    )
+                    db.add(news_item)
         db.commit()
     except Exception as e:
         print(f"❌ Error fetching news: {e}")
